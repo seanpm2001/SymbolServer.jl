@@ -1,6 +1,6 @@
 using SymbolServer, Pkg
 using SymbolServer: packagename, packageuuid, deps, manifest, project, version, Package, frommanifest, VarRef, _lookup
-using Base:UUID
+using Base: UUID
 using Test
 
 allns = SymbolServer.getallns()
@@ -102,7 +102,7 @@ end
         ssi = SymbolServerInstance("", store_path)
 
         @async begin
-            ret_status, store = getstore(ssi, path, download = false)
+            ret_status, store = getstore(ssi, path, download=false)
 
             @test ret_status == :canceled
         end
@@ -111,7 +111,7 @@ end
         # previously gets run first
         sleep(1)
 
-        ret_status2, store2 = getstore(ssi, path, download = false)
+        ret_status2, store2 = getstore(ssi, path, download=false)
 
         if ret_status2 == :failure
             @info String(take!(store2))
@@ -149,7 +149,7 @@ end
 
     if VERSION >= v"1.1-"
         @testset "Excluding private packages from cache download requests" begin
-            pkgs = Dict{Base.UUID, Pkg.Types.PackageEntry}()
+            pkgs = Dict{Base.UUID,Pkg.Types.PackageEntry}()
             if VERSION < v"1.3-"
                 pkgs[UUID("7876af07-990d-54b4-ab0e-23690620f79a")] = Pkg.Types.PackageEntry(name="Example", other=Dict("git-tree-sha1" => Base.SHA1("0"^40)))
                 pkgs[UUID("3e13f8c9-a9aa-412e-8b2a-fda000b375e2")] = Pkg.Types.PackageEntry(name="NotInGeneral", other=Dict("git-tree-sha1" => Base.SHA1("0"^40)))
@@ -203,23 +203,26 @@ import UUIDs
     else
         tmp_access = try
             n = "/tmp/" * string(UUIDs.uuid4())
-            touch(n); rm(n)
+            touch(n)
+            rm(n)
             true
         catch
             false
         end
         too_long = joinpath(tempdir(), string(UUIDs.uuid4())^3)
         mkdir(too_long)
-        for TEMPDIR in (tempdir(), too_long); withenv("TEMPDIR" => TEMPDIR) do
-            p = SymbolServer.pipe_name()
-            #         TEMPDIR    + / + prefix                  + UUID[1:13]
-            if length(tempdir()) + 1 + length("vscjlsymserv-") + 13 < 92 || !tmp_access
-                @test startswith(p, tempdir())
-                @test occursin(r"^vscjlsymserv-\w{8}-\w{4}$", basename(p))
-            else
-                @test occursin(r"^/tmp/vscjlsymserv-\w{8}(?:-\w{4}){3}-\w{12}$", p)
+        for TEMPDIR in (tempdir(), too_long)
+            withenv("TEMPDIR" => TEMPDIR) do
+                p = SymbolServer.pipe_name()
+                #         TEMPDIR    + / + prefix                  + UUID[1:13]
+                if length(tempdir()) + 1 + length("vscjlsymserv-") + 13 < 92 || !tmp_access
+                    @test startswith(p, tempdir())
+                    @test occursin(r"^vscjlsymserv-\w{8}-\w{4}$", basename(p))
+                else
+                    @test occursin(r"^/tmp/vscjlsymserv-\w{8}(?:-\w{4}){3}-\w{12}$", p)
+                end
             end
-        end end
+        end
         rm(too_long; recursive=true)
     end
 end
